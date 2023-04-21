@@ -154,8 +154,7 @@ public:
     int klevel;
     BaseOpponent * create(int i, int id);
     void init() {
-        BaseDamage = baseDmg[id];
-        gilGain = gilTable[id];
+        
         levelO = (i + id) % 10 + 1;
     }
     ~BaseOpponent() {}
@@ -178,12 +177,16 @@ public:
 class MadBear: public BaseOpponent {
 public: 
     MadBear()  {
+        BaseDamage = baseDmg[id];
+        gilGain = gilTable[id];
         init();
     }
 };
 class Bandit: public BaseOpponent {
 public: 
     Bandit() {
+        BaseDamage = baseDmg[id];
+        gilGain = gilTable[id];
         init();
     }
 };
@@ -191,7 +194,7 @@ public:
 BaseOpponent * BaseOpponent::create(int i, int id) {
     this->i = i;
     this->id = static_cast<OpponentType> (id);
-    BaseOpponent * opponent = nullptr;
+    BaseOpponent * opponent;
     switch (id) {
     case MADBEAR: {
         opponent = new MadBear;
@@ -223,7 +226,6 @@ int main() {
         switch (event)
         {
         case 1 ... 11: {
-            opponent = new Bandit;
             opponent->create(i, event);
             // fight(opponent);
             delete opponent;
