@@ -8,22 +8,79 @@
 bool isPrime(int n);
 bool isPythagoras(int n);
 
-enum ItemType {ANTIDOTE, PHOENIX1, PHOENIX2 = 112, PHOENIX3, PHOENIX4, SHIELD = 95, HAIR, SWORD};
+enum ItemType {ANTIDOTE = -1, PHOENIX, PHOENIX1, PHOENIX2 = 112, PHOENIX3, PHOENIX4, SHIELD = 95, HAIR, SWORD};
 enum KnightType { PALADIN = 0, LANCELOT, DRAGON, NORMAL };
 enum OpponentType {MADBEAR = 1, BANDIT, LORDLUPIN, ELF, TROLL, TORNBERY, QUEEN, NINA, DURIAN, OMEGA, HADES, ULTIMECIA = 99};
 
-// struct List {
-//     head;
+class BaseItem;
+class Node {
+private: 
+    int numsOfNode = 0;
+    Node * headNode = NULL;
+    bool canAdd() {
+        if (defaultSize <= numsOfNode) {
+            return 0;
+        }
+        return 1;
+    }
+public:
+    int defaultSize;
+    BaseItem * Item;
+    Node * next;
 
-// };
+    Node(BaseItem * item, Node * nextptr = NULL) {
+        this->Item = item;
+        this->next = nextptr;
+    }
+    ~Node() {
+        delete Item;
+        delete next;
+    }
+    bool insertFirst(Node * item) {
+        if (!canAdd()) return 0;
+        item->next = this;
+        this->numsOfNode ++;
+        headNode = item;
+        return 1;
+    }
+    Node * deleteNode() {
+        Node * tempNode = this;
+        this->next = headNode->next;
+        headNode->next = tempNode->next;
+        
+    }
+    int count() {
+        return numsOfNode;
+    }
+    BaseItem * get(ItemType ItemType) {
+        for (Node * i = this; i != NULL; i = i->next) {
+            if (i->Item->type() == ItemType) {
+                return i->Item;
+            }
+        }
+        return NULL;
+    }
+    void toString() {
+        string tmp = "";
+        for (Node * i = headNode; i != NULL; i = i->next) {
+            tmp += i->Item->getClass();
+            if (i->next != NULL) {
+                tmp += ",";
+            }
+        }
+        string s = "";
+        s = s + "Bag[" + "count=" + to_string(numsOfNode) + ";" + tmp + "]";
+        cout << s;
+    }
 
-// class BaseBag {
-// public:
-//     virtual bool insertFirst(BaseItem * item);
-//     virtual BaseItem * get(ItemType itemType);
-//     virtual string toString() const;
-// };
+};
 
+class BaseBag {
+public:
+    virtual bool insertFirst(BaseItem * item);
+    virtual BaseItem * get(ItemType itemType);
+    virtual string toString() const;
+};
 class BaseOpponent;
 class Events;
 class BaseKnight {
@@ -38,6 +95,7 @@ protected:
     KnightType knightType;
 
 public:
+    int status = 1; // 1: normal, -1: 
     BaseKnight() {}
     static BaseKnight * create(int id, int maxhp, int level, int phoenixdownI, int gil, int antidote){
         BaseKnight *knight = new BaseKnight;
@@ -56,36 +114,15 @@ public:
     }
     string toString() const;
     bool revive(){return 1;}
-    int remainGil(int gilGain) {
-        if (gil + gilGain >= 999) {
-                gilGain -= (999 - gil);
-                gil = 999;
-            }
-        else {
-            gil += gilGain;
-            gilGain = 0;
-        }
-        this->gil = gil;
-        return gilGain;
-    }
+    int remainGil(int gilGain);
     int fight(BaseOpponent * opponent);
+    pair<int, int> getHP_maxHP() {
+        return {hp, maxhp};
+    }
+    void usePhoenix(int hp) {
+        this->hp = hp;
+    }
 };
-
-inline string BaseKnight::toString() const {
-    string typeString[4] = {"PALADIN", "LANCELOT", "DRAGON", "NORMAL"};
-    // inefficient version, students can change these code
-    //      but the format output must be the same
-    string s("");
-    s += "[Knight:id: " + to_string(id) 
-        + ", hp: " + to_string(hp) 
-        + ", maxhp: " + to_string(maxhp)
-        + ", level: " + to_string(level)
-        + ", gil: " + to_string(gil)
-        // + bag->toString()
-        + ", knight_type: " + typeString[knightType]
-        + "]"; // added '\n' & ' ' per var
-    return s;
-}
 
 class BaseOpponent {
 protected: 
@@ -100,23 +137,14 @@ protected:
 public:
     int klevel;
     BaseOpponent * create(int i, int id);
-    void init() {
-        this->BaseDamage = baseDmg[id];
-        this->gilGain = gilTable[id];
-        this->levelO = (i + id) % 10 + 1;
-    }
     ~BaseOpponent() {}
-    bool result() {
-        if (levelO > klevel) return 0;
-        return 1;
-    }
-    void dmg() {
-        hpLose = BaseDamage * (levelO - klevel);
-    }
-    int reward() {
+    bool result();
+    void dmg();
+    void init(int i, int id);
+    virtual int reward() {
         return gilGain;
     }
-    int lose() {
+    virtual int lose() {
         dmg();
         return hpLose;
     }
@@ -124,125 +152,72 @@ public:
 
 class MadBear: public BaseOpponent {
 public: 
-    MadBear()  {
-        init();
+    MadBear(int i, int id)  {
+        init(i, id);
+        // debug(gilGain);
     }
 };
 class Bandit: public BaseOpponent {
 public: 
-    Bandit() {
-        init();
+    Bandit(int i, int id) {
+        init(i, id);
     }
 };
 class LordLupin: public BaseOpponent {
 public: 
-    LordLupin() {
-        init();
+    LordLupin(int i, int id) {
+        init(i, id);
     }
 };
 class Elf: public BaseOpponent {
 public: 
-    Elf() {
-        init();
+    Elf(int i, int id) {
+        init(i, id);
     }
 };
 class Troll: public BaseOpponent {
 public:
-    Troll() {
-        init();
+    Troll(int i, int id) {
+        init(i, id);
     }
 };
 class Tornbery: public BaseOpponent {
 public: 
-    Tornbery() {
-        init();
+    Tornbery(int i, int id) {
+        init(i, id);
     }
+    int reward();
 };
 class Queen: public BaseOpponent {
 public: 
-    Queen() {
-        init();
+    Queen(int i, int id) {
+        init(i, id);
     }
 };
 class Nina: public BaseOpponent {
 public: 
-    Nina() {
-        init();
+    Nina(int i, int id) {
+        init(i, id);
     }
 };
 class Durian: public BaseOpponent {
 public: 
-    Durian() {
-        init();
+    Durian(int i, int id) {
+        init(i, id);
     }
 };
 class Omega: public BaseOpponent {
 public: 
-    Omega() {
-        init();
+    Omega(int i, int id) {
+        init(i, id);
     }
 };
 class Hades: public BaseOpponent {
 public: 
-    Hades() {
-        init();
+    Hades(int i, int id) {
+        init(i, id);
     }
 };
-
-inline BaseOpponent * BaseOpponent::create(int i, int id) {
-    this->i = i;
-    this->id = static_cast<OpponentType> (id);
-    BaseOpponent * opponent = new BaseOpponent;
-    switch (id) {
-    case MADBEAR: {
-        opponent = new MadBear;
-        break;
-    }
-    case BANDIT: {
-        opponent = new Bandit;
-        break;
-    }
-    case LORDLUPIN: {
-        opponent = new LordLupin;
-        break;
-    }
-    case ELF: {
-        opponent = new Elf;
-        break;
-    }
-    case TROLL: {
-        opponent = new Troll;
-        break;
-    }
-    case TORNBERY: {
-        opponent = new Tornbery;
-        break;
-    }
-    case QUEEN: {
-        opponent = new Queen;
-        break;
-    }
-    case NINA: {
-        opponent = new Nina;
-        break;
-    }
-    case DURIAN: {
-        opponent = new Durian;
-        break;
-    }
-    case OMEGA: {
-        opponent = new Omega;
-        break;
-    }
-    case HADES: {
-        opponent = new Hades;
-        break;
-    }
-    default:
-        break;
-    }
-    return opponent;
-}
 class ArmyKnights {
 private:
     BaseKnight ** KnightList;
@@ -258,58 +233,20 @@ public:
         delete []KnightList;
         delete last;
     }
-    void fight(BaseOpponent * opponent) {
-        int temp = last->fight(opponent);
-        if (temp > 0) {
-            for (int i = numsOfKnights - 2; i >= 0; --i) {
-                temp = KnightList[i]->remainGil(temp);
-            }
-        }
-    }
+    void fight(BaseOpponent * opponent);
     
     bool adventure (Events * events);
-    int count() const {
-        return numsOfKnights;
-    }
-    BaseKnight * lastKnight() const {
-        return last;
-    }
+    int count() const;
+    BaseKnight * lastKnight() const;
 
-    bool hasPaladinShield() const {
-        return PaladinShield;
-    }
-    bool hasLancelotSpear() const {
-        return LancelotSpear;
-    }
-    bool hasGuinevereHair() const {
-        return GuinevereHair;
-    }
-    bool hasExcaliburSword() const {
-        return ExcaliburSword;
-    }
+    bool hasPaladinShield() const;
+    bool hasLancelotSpear() const;
+    bool hasGuinevereHair() const;
+    bool hasExcaliburSword() const;
     
     void printInfo() const;
     void printResult(bool win) const;
 };
-
-inline ArmyKnights::ArmyKnights(const string & file_armyknights) {
-    ifstream inFile(file_armyknights);
-    string num; getline(inFile, num);
-    this->numsOfKnights = stoi(num);
-    KnightList = new BaseKnight* [numsOfKnights];
-    for (int i = 0; i < numsOfKnights; ++i) {
-        string knightInfo; getline(inFile, knightInfo);
-        stringstream ss(knightInfo);
-        int info[5];
-        for (int j = 0; j < 5; ++j) {
-            ss >> info[j];
-        }
-        KnightList[i] = BaseKnight::create(i + 1, info[0], info[1], info[2], info[3], info[4]);
-    }
-    this->last = KnightList[numsOfKnights - 1];
-    inFile.close();
-}
-
 
 inline void ArmyKnights::printInfo() const {
     for (int i = 0; i < numsOfKnights; ++i) {
@@ -318,42 +255,113 @@ inline void ArmyKnights::printInfo() const {
     // cout << lastKnight() -> toString();
 }
 
-// class BaseItem {
-// public:
-//     virtual bool canUse ( BaseKnight * knight ) = 0;
-//     virtual void use ( BaseKnight * knight ) = 0;
-// };
+class BaseItem {
+public:
+    virtual ItemType type() {
+        return PHOENIX;
+    }
+    virtual string getClass() = 0;
+    int hp, maxhp;
+    virtual bool canUse ( BaseKnight * knight ) = 0;
+    virtual void use ( BaseKnight * knight ) = 0;
+    void init(BaseKnight * knight);
+};
 
-// void BaseItem::use(BaseKnight * knight) {
-    
-// }
+class Antidote : public BaseItem {
+public:
+    ItemType type() {
+        return ANTIDOTE;
+    }
+    string getClass() {
+        return "Antidote";
+    }
+    bool canUse(BaseKnight * knight) {
+        return 1;
+    }
+    void use(BaseKnight * knight) {
+        knight->status = 1;
+    }
+};
+class PhoenixI : public BaseItem {
+public:
+    ItemType type() {
+        return PHOENIX1;
+    }
+    bool canUse(BaseKnight * knight) {
+        init(knight);
+        if (hp <= 0) return 1;
+        return 0;
+    }
+    string getClass() {
+        return "PhoenixI";
+    }
+    void use(BaseKnight * knight) {
+        knight->usePhoenix(maxhp);
+    }
+};
+class PhoenixII : public BaseItem {
+public:
+    ItemType type() {
+        return PHOENIX2;
+    }
+    bool canUse(BaseKnight * knight) {
+        init(knight);
+        if (hp < maxhp / 4) return 1;
+        return 0;
+    }
+    void use(BaseKnight * knight) {
+        knight->usePhoenix(maxhp);
+    }
+    string getClass() {
+        return "PhoenixII";
+    }
+};
+class PhoenixIII : public BaseItem {
+public:
+    ItemType type() {
+        return PHOENIX3;
+    }
+    bool canUse(BaseKnight * knight) {
+        init(knight);
+        if (hp < maxhp / 3) return 1;
+        return 0;
+    }
+    void use(BaseKnight * knight) {
+        if (hp <= 0) knight->usePhoenix(maxhp / 3);
+        else knight->usePhoenix(maxhp / 4);
+    }
+    string getClass() {
+        return "PhoenixIII";
+    }
+};
+class PhoenixIV : public BaseItem {
+public:
+    ItemType type() {
+        return PHOENIX4;
+    }
+    bool canUse(BaseKnight * knight) {
+        init(knight);
+        if (hp < maxhp / 2);
+    }
+    void use(BaseKnight * knight) {
+        if (hp <= 0) knight->usePhoenix(maxhp / 2);
+        else knight->usePhoenix(maxhp / 5);
+    }
+    string getClass() {
+        return "PhoenixIV";
+    }
+};
 class Events {
 private: 
     int numsOfEvents;
     int * list;
 public:
-    Events(const string & fileEvents) {
-        ifstream inFile(fileEvents);
-        string tmp;
-        getline(inFile, tmp);
-        this->numsOfEvents = stoi(tmp);
-        list = new int[numsOfEvents];
-        getline(inFile, tmp);
-        stringstream ss(tmp);
-        for (int i = 0; i < numsOfEvents; ++i) {
-            ss >> list[i];
-        }
-        inFile.close();
-    }
+    Events(const string & fileEvents);
     ~Events() {
         delete list;
     }
-    int count() const {
-        return numsOfEvents;
-    }
-    int get(int i) const {
-        return list[i];
-    }
+    int count() const;
+    int get(int i) const;
 };
 
 class KnightAdventure {
@@ -367,16 +375,9 @@ public:
         army->~ArmyKnights();
         events->~Events();
     };
-
-    void loadArmyKnights(const string & fileArmy) {
-        army = new ArmyKnights(fileArmy);
-    }
-    void loadEvents(const string & fileEvent) {
-        events = new Events(fileEvent);
-    }
-    void run() {
-        army->adventure(events);
-    }
+    void loadArmyKnights(const string & fileArmy);
+    void loadEvents(const string & fileEvent);
+    void run();
 };
 
 #endif // __KNIGHT2_H__
