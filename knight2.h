@@ -46,7 +46,10 @@ public:
 };
 
 class Paladin: public BaseKnight {
-
+public: 
+    Paladin() {
+        knightType = PALADIN;
+    }
 };
 class Lancelot: public BaseKnight {
 
@@ -129,7 +132,7 @@ public:
         delete headNode;
     }
     void insertFirst(BaseItem * item);
-    string toString();
+    string toString() const;
     void remove (int n);
     BaseItem * search(ItemType item);
 };

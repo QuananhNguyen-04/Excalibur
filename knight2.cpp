@@ -71,7 +71,6 @@ int Tornbery::reward() {
     return 1;
 }
 
-
 void BaseItem::init(BaseKnight * knight) {
         pair<int, int> info = knight->getHP_maxHP();
         this->hp = info.first;
@@ -159,7 +158,7 @@ void List::insertFirst(BaseItem * item) {
     node->next = headNode;
     this->headNode = node;
 }
-string List::toString() {
+string List::toString() const {
     string s = "Bag[count=";
     s += to_string(contain);
     string temp = ";";
@@ -245,6 +244,9 @@ BaseItem* PaladinBag::get(ItemType item) {
     }
     return nullptr;
 }
+string PaladinBag::toString() const {
+    return listOfItems.toString();
+}
 
 LancelotBag::LancelotBag(int p1, int anti) {
     this->maxSize = Size;
@@ -277,6 +279,9 @@ BaseItem* LancelotBag::get(ItemType item) {
     }
     return nullptr;
 }
+string LancelotBag::toString() const {
+    return listOfItems.toString();
+}
 
 DragonBag::DragonBag(int p1) {
     this->maxSize = Size;
@@ -302,6 +307,9 @@ BaseItem* DragonBag::get(ItemType item) {
         return tempItem;
     }
     return nullptr;
+}
+string DragonBag::toString() const {
+    return listOfItems.toString();
 }
 
 NormalBag::NormalBag(int p1, int anti) {
@@ -334,6 +342,9 @@ BaseItem* NormalBag::get(ItemType item) {
         return tempItem;
     }
     return nullptr;
+}
+string NormalBag::toString() const {
+    return listOfItems.toString();
 }
 
 /* * * END implementation of class BaseBag * * */
@@ -418,13 +429,13 @@ string BaseKnight::toString() const {
     // inefficient version, students can change these code
     //      but the format output must be the same
     string s("");
-    s += "[Knight:id: " + to_string(id) 
-        + ", hp: " + to_string(hp) 
-        + ", maxhp: " + to_string(maxhp)
-        + ", level: " + to_string(level)
-        + ", gil: " + to_string(gil)
-        // + bag->toString()
-        + ", knight_type: " + typeString[knightType]
+    s += "[Knight:id:" + to_string(id) 
+        + ",hp:" + to_string(hp) 
+        + ",maxhp:" + to_string(maxhp)
+        + ",level:" + to_string(level)
+        + ",gil:" + to_string(gil)
+        + bag->toString()
+        + ",knight_type:" + typeString[knightType]
         + "]"; // added '\n' & ' ' per var
     return s;
 }
