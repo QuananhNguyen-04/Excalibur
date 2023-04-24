@@ -1,5 +1,6 @@
 #include "knight2.h"
 
+
 bool BaseOpponent::result() {
     if (levelO > klevel) return 0;
     return 1;
@@ -77,8 +78,263 @@ void BaseItem::init(BaseKnight * knight) {
         this->maxhp = info.second;
     }
 
+ItemType Antidote::type() {
+    return ANTIDOTE;
+}
+string Antidote::getClass() {
+    return "Antidote";
+}
+bool Antidote::canUse(BaseKnight * knight) {
+    return 1;
+}
+void Antidote::use(BaseKnight * knight) {
+    knight->status = 1;
+}
+ItemType PhoenixI::type() {
+    return PHOENIX1;
+}
+bool PhoenixI::canUse(BaseKnight * knight) {
+    init(knight);
+    if (hp <= 0) return 1;
+    return 0;
+}
+string PhoenixI::getClass() {
+    return "PhoenixI";
+}
+void PhoenixI::use(BaseKnight * knight) {
+    knight->usePhoenix(maxhp);
+}
+ItemType PhoenixII::type() {
+    return PHOENIX2;
+}
+bool PhoenixII::canUse(BaseKnight * knight) {
+    init(knight);
+    if (hp < maxhp / 4) return 1;
+    return 0;
+}
+void PhoenixII::use(BaseKnight * knight) {
+    knight->usePhoenix(maxhp);
+}
+string PhoenixII::getClass() {
+    return "PhoenixII";
+}
+ItemType PhoenixIII::type() {
+    return PHOENIX3;
+}
+bool PhoenixIII::canUse(BaseKnight * knight) {
+    init(knight);
+    if (hp < maxhp / 3) return 1;
+    return 0;
+}
+void PhoenixIII::use(BaseKnight * knight) {
+    if (hp <= 0) knight->usePhoenix(maxhp / 3);
+    else knight->usePhoenix(maxhp / 4);
+}
+string PhoenixIII::getClass() {
+    return "PhoenixIII";
+}
+ItemType PhoenixIV::type() {
+    return PHOENIX4;
+}
+bool PhoenixIV::canUse(BaseKnight * knight) {
+    init(knight);
+    if (hp < maxhp / 2) return 1;
+    return 0;
+}
+void PhoenixIV::use(BaseKnight * knight) {
+    if (hp <= 0) knight->usePhoenix(maxhp / 2);
+    else knight->usePhoenix(maxhp / 5);
+}
+string PhoenixIV::getClass() {
+    return "PhoenixIV";
+}
 
 /* * * BEGIN implementation of class BaseBag * * */
+void List::insertFirst(BaseItem * item) {
+    Node * node = nullptr;
+    if (headNode == nullptr) {
+        this->headNode = node;
+        return;
+    }
+    node->next = headNode;
+    this->headNode = node;
+}
+string List::toString() {
+    string s = "Bag[count=";
+    s += to_string(contain);
+    string temp = ";";
+    Node * tempNode = headNode;
+    while (tempNode != nullptr) {
+        temp += tempNode->item->getClass();
+        if (tempNode->next != nullptr) temp += ',';
+        tempNode = tempNode->next;
+    }
+    s += temp + "]";
+    return s;
+}
+void List::remove(int n) {
+    if (n == 0) {
+        headNode = headNode->next;
+    }
+    Node * temp = headNode;
+    Node * tempHeadNode = headNode->next;
+    Node * node = headNode;
+    for (int i = 0; i < n; ++i) {
+        node = node->next;
+    }
+    if (n == 1) {
+        headNode->next = node->next;
+        return;
+    }
+    while (temp != nullptr) {
+        if (temp->next == node) {
+            temp->next = headNode;
+            temp->next->next = node->next;
+            node->next = tempHeadNode;
+            this->headNode = node;
+            break;
+        }
+        temp = temp->next;
+    }
+    headNode = headNode->next;
+    this->contain--;
+    delete node;
+    delete temp;
+    delete tempHeadNode;
+}
+BaseItem * List::search(ItemType item) {
+    int ans = 0;
+    Node * tempNode = headNode;
+    while (tempNode != nullptr) {
+        if (tempNode->item->type() == item) {
+            return tempNode->item;
+        }
+        tempNode = tempNode->next;
+    }
+    return nullptr;
+}
+
+PaladinBag::PaladinBag(int p1, int anti) {
+    this->maxSize = Size;
+    listOfItems.maxSize = this->maxSize;
+    while (anti--) {
+        BaseItem * item = new Antidote;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+    while (p1) {
+        BaseItem * item = new PhoenixI;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+}
+bool PaladinBag::insertFirst(BaseItem * item) {
+    if (listOfItems.contain == listOfItems.maxSize) {
+        return 0;
+    }
+    listOfItems.contain++;
+    listOfItems.insertFirst(item);
+    return 1;
+} 
+BaseItem* PaladinBag::get(ItemType item) {
+    BaseItem * tempItem = listOfItems.search(item);
+    if (tempItem != nullptr) {
+        return tempItem;
+    }
+    return nullptr;
+}
+
+LancelotBag::LancelotBag(int p1, int anti) {
+    this->maxSize = Size;
+    listOfItems.maxSize = this->maxSize;
+    while (anti--) {
+        BaseItem * item = new Antidote;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+    while (p1) {
+        BaseItem * item = new PhoenixI;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+}
+bool LancelotBag::insertFirst(BaseItem * item) {
+    if (listOfItems.contain == listOfItems.maxSize) {
+        return 0;
+    }
+    listOfItems.contain++;
+    listOfItems.insertFirst(item);
+    return 1;
+} 
+BaseItem* LancelotBag::get(ItemType item) {
+    BaseItem * tempItem = listOfItems.search(item);
+    if (tempItem != nullptr) {
+        return tempItem;
+    }
+    return nullptr;
+}
+
+DragonBag::DragonBag(int p1) {
+    this->maxSize = Size;
+    listOfItems.maxSize = this->maxSize;
+    while (p1) {
+        BaseItem * item = new PhoenixI;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+}
+bool DragonBag::insertFirst(BaseItem * item) {
+    if (listOfItems.contain == listOfItems.maxSize) {
+        return 0;
+    }
+    listOfItems.contain++;
+    listOfItems.insertFirst(item);
+    return 1;
+} 
+BaseItem* DragonBag::get(ItemType item) {
+    BaseItem * tempItem = listOfItems.search(item);
+    if (tempItem != nullptr) {
+        return tempItem;
+    }
+    return nullptr;
+}
+
+NormalBag::NormalBag(int p1, int anti) {
+    this->maxSize = Size;
+    listOfItems.maxSize = this->maxSize;
+    while (anti--) {
+        BaseItem * item = new Antidote;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+    while (p1) {
+        BaseItem * item = new PhoenixI;
+        if (!insertFirst(item)) {
+            delete item;
+        }
+    }
+}
+bool NormalBag::insertFirst(BaseItem * item) {
+    if (listOfItems.contain == listOfItems.maxSize) {
+        return 0;
+    }
+    listOfItems.contain++;
+    listOfItems.insertFirst(item);
+    return 1;
+} 
+BaseItem* NormalBag::get(ItemType item) {
+    BaseItem * tempItem = listOfItems.search(item);
+    if (tempItem != nullptr) {
+        return tempItem;
+    }
+    return nullptr;
+}
 
 /* * * END implementation of class BaseBag * * */
 
@@ -102,6 +358,33 @@ bool isPythagoras(int n) {
         return 1;
     }
     return 0;
+}
+BaseKnight * BaseKnight::create(int id, int maxhp, int level, int phoenixdownI, int gil, int antidote) {
+    BaseKnight *knight;
+    if (isPrime(maxhp)) {
+        knight = new Paladin;
+        knight -> bag = new PaladinBag(phoenixdownI, antidote);
+    }
+    else if (maxhp == 888) {
+        knight = new Lancelot;
+        knight -> knightType = LANCELOT;
+    }
+    else if (isPythagoras(maxhp)) {
+        knight = new Dragon;
+        knight -> knightType = DRAGON;
+    }
+    else {
+        knight = new Normal;
+        knight -> knightType = NORMAL;
+    }
+    knight -> id = id;
+    knight -> hp = maxhp;
+    knight -> maxhp = maxhp;
+    knight -> level = level;
+    knight -> gil = gil;
+    knight -> antidote = antidote;
+
+    return knight;
 }
 int BaseKnight::remainGil(int gilGain) {
         if (gil + gilGain >= 999) {
@@ -167,7 +450,7 @@ ArmyKnights::ArmyKnights(const string & file_armyknights) {
     inFile.close();
 }
 void ArmyKnights::fight(BaseOpponent * opponent) {
-        int temp = last->fight(opponent);
+        int temp = (last->fight(opponent));
         debug(temp);
         if (temp > 0) {
             for (int i = numsOfKnights - 2; i >= 0; --i) {
@@ -201,8 +484,8 @@ bool ArmyKnights::adventure(Events * events) {
     return 0;
 }
 BaseKnight * ArmyKnights::lastKnight() const {
-        return last;
-    }
+    return last;
+}
 bool ArmyKnights::hasPaladinShield() const {
         return PaladinShield;
     }
