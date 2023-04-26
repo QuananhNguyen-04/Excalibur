@@ -150,12 +150,13 @@ string PhoenixIV::getClass() {
 
 /* * * BEGIN implementation of class BaseBag * * */
 void List::insertFirst(BaseItem * item) {
-    Node * node = nullptr;
+    Node * node = new Node(item);
     if (headNode == nullptr) {
         this->headNode = node;
         return;
     }
-    node->next = headNode;
+    Node * tempNode = headNode;
+    node->next = tempNode;
     this->headNode = node;
 }
 string List::toString() const {
@@ -163,7 +164,7 @@ string List::toString() const {
     s += to_string(contain);
     string temp = ";";
     Node * tempNode = headNode;
-    while (tempNode != nullptr) {
+    while (tempNode != NULL) {
         temp += tempNode->item->getClass();
         if (tempNode->next != nullptr) temp += ',';
         tempNode = tempNode->next;
@@ -222,7 +223,7 @@ PaladinBag::PaladinBag(int p1, int anti) {
             delete item;
         }
     }
-    while (p1) {
+    while (p1--) {
         BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
@@ -257,7 +258,7 @@ LancelotBag::LancelotBag(int p1, int anti) {
             delete item;
         }
     }
-    while (p1) {
+    while (p1--) {
         BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
@@ -286,7 +287,7 @@ string LancelotBag::toString() const {
 DragonBag::DragonBag(int p1) {
     this->maxSize = Size;
     listOfItems.maxSize = this->maxSize;
-    while (p1) {
+    while (p1--) {
         BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
@@ -314,14 +315,15 @@ string DragonBag::toString() const {
 
 NormalBag::NormalBag(int p1, int anti) {
     this->maxSize = Size;
-    listOfItems.maxSize = this->maxSize;
+    this->listOfItems.maxSize = this->maxSize;
+
     while (anti--) {
         BaseItem * item = new Antidote;
         if (!insertFirst(item)) {
             delete item;
         }
     }
-    while (p1) {
+    while (p1--) {
         BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
@@ -379,14 +381,17 @@ BaseKnight * BaseKnight::create(int id, int maxhp, int level, int phoenixdownI, 
     else if (maxhp == 888) {
         knight = new Lancelot;
         knight -> knightType = LANCELOT;
+        knight->bag = new LancelotBag(phoenixdownI, antidote);
     }
     else if (isPythagoras(maxhp)) {
         knight = new Dragon;
         knight -> knightType = DRAGON;
+        knight->bag = new DragonBag(phoenixdownI);
     }
     else {
         knight = new Normal;
         knight -> knightType = NORMAL;
+        knight->bag = new NormalBag(phoenixdownI, antidote);
     }
     knight -> id = id;
     knight -> hp = maxhp;
@@ -410,7 +415,7 @@ int BaseKnight::remainGil(int gilGain) {
         // debug(gilGain);
         return gilGain;
     }
-int BaseKnight::fight(BaseOpponent * opponent) {
+int BaseKnight::fight(BaseOpponent * opponent, int type) {
     int gilGain;
     opponent->klevel = level;
         if (opponent->result()) {
@@ -460,18 +465,35 @@ ArmyKnights::ArmyKnights(const string & file_armyknights) {
     this->last = KnightList[numsOfKnights - 1];
     inFile.close();
 }
-void ArmyKnights::fight(BaseOpponent * opponent) {
-        int temp = (last->fight(opponent));
-        debug(temp);
-        if (temp > 0) {
-            for (int i = numsOfKnights - 2; i >= 0; --i) {
-                temp = KnightList[i]->remainGil(temp);
-            }
-        }
-    }
+void ArmyKnights::fight(BaseOpponent * opponent, int type) {
+    
+
+
+
+}
 int ArmyKnights::count() const {
-        return numsOfKnights;
+    return numsOfKnights;
+}
+void ArmyKnights::getSpecialItem(int event) {
+    switch (event)
+    {
+    case 95:
+        this->PaladinShield = 1;
+        break;
+    case 96:
+        this->LancelotSpear = 1;
+        break;
+    case 97:
+        this->GuinevereHair = 1;
+        break;
+    case 98:
+        if (PaladinShield and LancelotSpear and GuinevereHair) this->ExcaliburSword = 1;
+        break;
+    
+    default:
+        break;
     }
+}
 bool ArmyKnights::adventure(Events * events) {
     for (int i = 0; i < events->count(); ++i) {
         int event = events->get(i);
@@ -482,10 +504,13 @@ bool ArmyKnights::adventure(Events * events) {
         case 1 ... 11: {
             BaseOpponent * tempOpponent = new BaseOpponent;
             opponent = tempOpponent->create(i, event);
-            fight(opponent);
+            fight(opponent, event);
             delete tempOpponent;
             break;
         }
+        case 95 ... 98:
+            getSpecialItem(event);
+            break;
         default:
             break;
         }
@@ -498,8 +523,8 @@ BaseKnight * ArmyKnights::lastKnight() const {
     return last;
 }
 bool ArmyKnights::hasPaladinShield() const {
-        return PaladinShield;
-    }
+    return PaladinShield;
+}
 bool ArmyKnights::hasLancelotSpear() const {
     return LancelotSpear;
 }
@@ -520,7 +545,7 @@ void ArmyKnights::printInfo() const {
         << ";GuinevereHair:" << this->hasGuinevereHair()
         << ";ExcaliburSword:" << this->hasExcaliburSword()
         << endl
-        << string('-', 50) << endl;
+        << string(50, '-') << endl;
 }
 void ArmyKnights::printResult(bool win) const {
     cout << (win ? "WIN" : "LOSE") << endl;

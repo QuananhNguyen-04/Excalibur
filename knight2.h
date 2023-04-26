@@ -4,11 +4,13 @@
 #include "main.h"
 
 #define debug(x) cerr << #x << ": [" << x << "]" << endl;
-
+#define LancelotDmg 0.05
+#define PaladinDmg 0.06
+#define DragonDmg 0.075
 bool isPrime(int n);
 bool isPythagoras(int n);
 
-enum ItemType {ANTIDOTE = -1, PHOENIX, PHOENIX1, PHOENIX2 = 112, PHOENIX3, PHOENIX4, SHIELD = 95, HAIR, SWORD};
+enum ItemType {ANTIDOTE = -1, PHOENIX, PHOENIX1, PHOENIX2 = 112, PHOENIX3, PHOENIX4, SHIELD = 95, SPEAR, HAIR, SWORD};
 enum KnightType { PALADIN = 0, LANCELOT, DRAGON, NORMAL };
 enum OpponentType {MADBEAR = 1, BANDIT, LORDLUPIN, ELF, TROLL, TORNBERY, QUEEN, NINA, DURIAN, OMEGA, HADES, ULTIMECIA = 99};
 
@@ -28,15 +30,14 @@ protected:
     int antidote;
     BaseBag * bag;
     KnightType knightType;
-
+    double Dmg;
 public:
     int status = 1; // 1: normal, -1: 
-    BaseKnight() {}
     static BaseKnight * create(int id, int maxhp, int level, int phoenixdownI, int gil, int antidote);
     string toString() const;
     bool revive(){return 1;}
     int remainGil(int gilGain);
-    int fight(BaseOpponent * opponent);
+    virtual int fight(BaseOpponent * opponent, int type);
     pair<int, int> getHP_maxHP() {
         return {hp, maxhp};
     }
@@ -49,16 +50,32 @@ class Paladin: public BaseKnight {
 public: 
     Paladin() {
         knightType = PALADIN;
+        this->Dmg = PaladinDmg;
     }
+    int fight(BaseOpponent * opponent);
 };
 class Lancelot: public BaseKnight {
-
+public:
+    Lancelot() {
+        knightType = LANCELOT;
+        this->Dmg = LancelotDmg;
+    }
+    int fight(BaseOpponent * opponent);
 };
 class Dragon: public BaseKnight {
-
+public:
+    Dragon() {
+        knightType = DRAGON;
+        this->Dmg = DragonDmg;
+    }
+    int fight(BaseOpponent * opponent);
 };
 class Normal: public BaseKnight {
-
+public:
+    Normal() {
+        knightType = NORMAL;
+    }
+    int fight(BaseOpponent * opponent);
 };
 
 class BaseItem {
@@ -118,7 +135,7 @@ public:
     }
     ~Node() {
         delete next;
-        item->~BaseItem();
+        delete item;
     }
 };
 class List {
@@ -287,17 +304,20 @@ private:
     BaseKnight ** KnightList;
     BaseKnight * last;
     int numsOfKnights;
-    bool PaladinShield;
-    bool LancelotSpear;
-    bool GuinevereHair;
-    bool ExcaliburSword;
+    bool PaladinShield = 0;
+    bool LancelotSpear = 0;
+    bool GuinevereHair = 0;
+    bool ExcaliburSword = 0;
 public:
     ArmyKnights (const string & file_armyknights);
     ~ArmyKnights() {
+        for (int i = 0; i < numsOfKnights; ++i) {
+            delete KnightList[i];
+        }
         delete []KnightList;
-        delete last;
+        // delete last;
     }
-    void fight(BaseOpponent * opponent);
+    void fight(BaseOpponent * opponent, int type);
     
     bool adventure (Events * events);
     int count() const;
@@ -307,7 +327,7 @@ public:
     bool hasLancelotSpear() const;
     bool hasGuinevereHair() const;
     bool hasExcaliburSword() const;
-    
+    void getSpecialItem(int event);
     void printInfo() const;
     void printResult(bool win) const;
 };
@@ -319,7 +339,7 @@ private:
 public:
     Events(const string & fileEvents);
     ~Events() {
-        delete list;
+        delete []list;
     }
     int count() const;
     int get(int i) const;
