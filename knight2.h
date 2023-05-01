@@ -28,16 +28,20 @@ protected:
     int level;
     int gil;
     int antidote;
-    BaseBag * bag;
     KnightType knightType;
+    BaseBag * bag;
     double Dmg;
 public:
-    int status = 1; // 1: normal, -1: 
+    int status = 1; // 1: normal, -1: poisoned
+    virtual ~BaseKnight();
     static BaseKnight * create(int id, int maxhp, int level, int phoenixdownI, int gil, int antidote);
     string toString() const;
-    bool revive(){return 1;}
-    int remainGil(int gilGain);
-    virtual int fight(BaseOpponent * opponent, int type);
+    bool revive();
+    virtual bool fight(BaseOpponent * opponent, int type, int * itemList) = 0;
+    KnightType returnType() {
+        return knightType;
+    }
+    void updateInfo(int * itemList);
     pair<int, int> getHP_maxHP() {
         return {hp, maxhp};
     }
@@ -52,7 +56,8 @@ public:
         knightType = PALADIN;
         this->Dmg = PaladinDmg;
     }
-    int fight(BaseOpponent * opponent);
+    ~Paladin();
+    bool fight(BaseOpponent * opponent, int type, int * itemList);
 };
 class Lancelot: public BaseKnight {
 public:
@@ -60,7 +65,8 @@ public:
         knightType = LANCELOT;
         this->Dmg = LancelotDmg;
     }
-    int fight(BaseOpponent * opponent);
+    ~Lancelot();
+    bool fight(BaseOpponent * opponent, int type, int * itemList);
 };
 class Dragon: public BaseKnight {
 public:
@@ -68,14 +74,17 @@ public:
         knightType = DRAGON;
         this->Dmg = DragonDmg;
     }
-    int fight(BaseOpponent * opponent);
+    ~Dragon();
+    bool fight(BaseOpponent * opponent, int type, int * itemList);
 };
 class Normal: public BaseKnight {
 public:
     Normal() {
         knightType = NORMAL;
+        this->Dmg = 0;
     }
-    int fight(BaseOpponent * opponent);
+    ~Normal();
+    bool fight(BaseOpponent * opponent, int type, int * itemList);
 };
 
 class BaseItem {
@@ -83,6 +92,7 @@ protected:
 public:
     virtual ItemType type() = 0;
     virtual string getClass() = 0;
+    virtual ~BaseItem() {}
     int hp, maxhp;
     virtual bool canUse ( BaseKnight * knight ) = 0;
     virtual void use ( BaseKnight * knight ) = 0;
@@ -91,10 +101,12 @@ public:
 
 class Antidote : public BaseItem {
 public:
+    Antidote() {}
     ItemType type();
     string getClass();
     bool canUse(BaseKnight * knight);
     void use(BaseKnight * knight);
+    ~Antidote();
 };
 class PhoenixI : public BaseItem {
 public:
@@ -102,6 +114,7 @@ public:
     string getClass();
     bool canUse(BaseKnight * knight);
     void use(BaseKnight * knight);
+    ~PhoenixI();
 };
 class PhoenixII : public BaseItem {
 public:
@@ -109,6 +122,7 @@ public:
     string getClass();
     bool canUse(BaseKnight * knight);
     void use(BaseKnight * knight);
+    ~PhoenixII();
 };
 class PhoenixIII : public BaseItem {
 public:
@@ -116,6 +130,7 @@ public:
     string getClass();
     bool canUse(BaseKnight * knight);
     void use(BaseKnight * knight);
+    ~PhoenixIII();
 };
 class PhoenixIV : public BaseItem {
 public:
@@ -123,18 +138,22 @@ public:
     string getClass();
     bool canUse(BaseKnight * knight);
     void use(BaseKnight * knight);
+    ~PhoenixIV();
 };
 
 class Node {
 public:
     BaseItem * item = nullptr;
     Node * next;
+    Node() {
+        this->next = nullptr;
+    }
     Node(BaseItem * item, Node * ptrnext = nullptr) {
         this->item = item;
         this->next = ptrnext;
     }
     ~Node() {
-        delete next;
+        next = nullptr;
         delete item;
     }
 };
@@ -145,21 +164,22 @@ public:
     int contain = 0;
     int maxSize;
     List() {}
-    ~List() {
-        delete headNode;
-    }
+    ~List();
+    bool isFull();
     void insertFirst(BaseItem * item);
     string toString() const;
     void remove (int n);
-    BaseItem * search(ItemType item);
+    pair<BaseItem*, int> search(ItemType item, int startPos = 0);
 };
 
 class BaseBag {
 public:
     BaseBag() {}
+    virtual ~BaseBag() {
+    }
     int maxSize;
     List listOfItems;
-    void drop(int num);
+    void drop(int num, int pos);
     virtual bool insertFirst(BaseItem * item) = 0;
     virtual BaseItem * get(ItemType item) = 0;
     virtual string toString() const = 0;
@@ -170,6 +190,8 @@ private:
     const int Size = 5000;
 public:
     PaladinBag(int p1, int anti);
+    ~PaladinBag() {
+    }
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -179,6 +201,8 @@ private:
     const int Size = 16;
 public:
     LancelotBag(int p1, int anti);
+    ~LancelotBag() {
+    }
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -188,6 +212,8 @@ private:
     const int Size = 14;
 public:
     DragonBag(int p1);
+    ~DragonBag() {
+    }
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -197,22 +223,22 @@ private:
     const int Size = 19;
 public:
     NormalBag(int p1, int anti);
+    ~NormalBag() {
+        listOfItems.~List();
+    }
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
 };
-
-class BaseOpponent;
-class Events;
 
 class BaseOpponent {
 protected: 
     int levelO;
     int i;
     OpponentType id;
-    int BaseDamage;
-    int gilGain;
-    int hpLose;
+    int BaseDamage = 0;
+    int gilGain = 0;
+    int hpLose = 0;
     int gilTable[6] = {0,100,150,450,750,800};
     int baseDmg[6] = {0, 10, 15, 45, 75, 95};
 public:
@@ -221,6 +247,7 @@ public:
     ~BaseOpponent() {}
     bool result();
     void dmg();
+    OpponentType type();
     void init(int i, int id);
     virtual int reward() {
         return gilGain;
@@ -235,79 +262,95 @@ class MadBear: public BaseOpponent {
 public: 
     MadBear(int i, int id)  {
         init(i, id);
-        // debug(gilGain);
     }
+    ~MadBear();
 };
 class Bandit: public BaseOpponent {
 public: 
     Bandit(int i, int id) {
         init(i, id);
     }
+    ~Bandit();
 };
 class LordLupin: public BaseOpponent {
 public: 
     LordLupin(int i, int id) {
         init(i, id);
     }
+    ~LordLupin();
 };
 class Elf: public BaseOpponent {
 public: 
     Elf(int i, int id) {
         init(i, id);
     }
+    ~Elf();
 };
 class Troll: public BaseOpponent {
 public:
     Troll(int i, int id) {
         init(i, id);
     }
+    ~Troll();
 };
 class Tornbery: public BaseOpponent {
 public: 
     Tornbery(int i, int id) {
         init(i, id);
     }
-    int reward();
+    ~Tornbery();
+    int lose() {
+        return 10;
+    }
 };
 class Queen: public BaseOpponent {
 public: 
     Queen(int i, int id) {
         init(i, id);
     }
+    ~Queen();
 };
 class Nina: public BaseOpponent {
 public: 
     Nina(int i, int id) {
         init(i, id);
     }
+    ~Nina();
 };
 class Durian: public BaseOpponent {
 public: 
     Durian(int i, int id) {
         init(i, id);
     }
+    ~Durian();
 };
 class Omega: public BaseOpponent {
 public: 
     Omega(int i, int id) {
         init(i, id);
     }
+    ~Omega();
 };
 class Hades: public BaseOpponent {
 public: 
     Hades(int i, int id) {
         init(i, id);
     }
+    ~Hades();
 };
+
 class ArmyKnights {
 private:
     BaseKnight ** KnightList;
     BaseKnight * last;
     int numsOfKnights;
+    int *itemInherit; // ANTIDOTE, PHOENIX1, PHOENIX2, PHOENIX3, PHOENIX4, GIL
     bool PaladinShield = 0;
     bool LancelotSpear = 0;
     bool GuinevereHair = 0;
     bool ExcaliburSword = 0;
+    bool isMeetHades = 0;
+    bool isMeetOmega = 0;
 public:
     ArmyKnights (const string & file_armyknights);
     ~ArmyKnights() {
@@ -315,9 +358,9 @@ public:
             delete KnightList[i];
         }
         delete []KnightList;
-        // delete last;
+
     }
-    void fight(BaseOpponent * opponent, int type);
+    void fight(BaseOpponent * opponent, int type, int * itemList);
     
     bool adventure (Events * events);
     int count() const;
@@ -353,8 +396,8 @@ private:
 public:
     KnightAdventure();
     ~KnightAdventure() {
-        army->~ArmyKnights();
-        events->~Events();
+        delete army;
+        delete events;
     };
     void loadArmyKnights(const string & fileArmy);
     void loadEvents(const string & fileEvent);

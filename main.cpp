@@ -22,6 +22,6 @@ int main(int argc, char ** argv) {
     knightAdventure->run();
 
     delete knightAdventure;
-    abort();
+    // abort();
     return 0;
 }
