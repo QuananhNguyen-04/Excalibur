@@ -544,8 +544,8 @@ bool BaseKnight::revive() {
             if (p.second == -1) return 1;
             BaseItem * Item = p.first;
             if (Item->canUse(this)) {
-                bag->get(Item->type());
                 Item->use(this);
+                bag->get(Item->type());
                 return 1;
             }
             pos = p.second + 1;
@@ -581,6 +581,7 @@ bool BaseKnight::revive() {
     if (gil >= 100) {
         this->usePhoenix(maxhp / 2);
         gil -= 100;
+        if (this->hp <= 0) return 0;
         return 1;
     }
     return 0;
@@ -661,6 +662,7 @@ bool Lancelot::fight(BaseOpponent *opponent, int type, int *itemList)
 Lancelot::~Lancelot() {
     delete bag;
 }
+
 bool Dragon::fight(BaseOpponent *opponent, int type, int *itemList)
 {
     return false;
@@ -668,49 +670,68 @@ bool Dragon::fight(BaseOpponent *opponent, int type, int *itemList)
 Dragon::~Dragon() {
     delete bag;
 }
+
 bool Normal::fight(BaseOpponent * opponent, int type, int * itemList) {
     opponent->klevel = level;
     bool win = 1;
+    debug(opponent->levelO)
     switch (type) {
         case 1 ... 5: {
             if (opponent->result()) {
                 itemList[5] += opponent->reward();
-                win = 1;
             }
             else {
                 this->hp -= opponent->lose();
-                if (hp <= 0) {
-                    if (this->revive()) {
-                        win = 1;
-                    }
-                    else win = 0;
-                }
-
+                if (hp <= 0) win = 0;
             }
             break;
         }
         case 6: {
             if (opponent->result()) {
                 if (level + 1 <= 10) this->level++;
-                win = 1;
             }
             else {
                 BaseItem * item = bag->get(ANTIDOTE);
                 if (item == nullptr) {
                     bag->drop(3);
                     this->hp -= opponent->lose();
-                    if (hp <= 0) {
-                        if (!this->revive()) {
-                            win = 1;
-                        }
-                        else win = 0;
-                    }
+                    if (hp <= 0) win = 0;
                 }
                 else {
                     item->use(this);
+                    debug(this->hp);
                     delete item;
-                    win = 1;
                 }
+            }
+            break;
+        }
+        case 7: {
+            if (opponent->result()) {
+                if (gil * 2 > 999) {
+                    itemList[5] += (gil * 2 - 999);
+                    this->gil = gil * 2 - 999;
+                }
+                else this->gil *= 2;
+            }
+            else this->gil /= 2;
+            break;
+        }
+        case 8: {
+            if (gil >= 50) {
+                if (hp < maxhp / 3) {
+                    this->hp += (maxhp / 5);
+                    this->gil -= 50;
+                }
+            }
+            break;
+        }
+        case 10: {
+            if (level == 10 and hp == maxhp) {
+                this->gil = 999;
+            }
+            else {
+                this->hp = 0;
+                win = 0;
             }
             break;
         }
@@ -743,7 +764,6 @@ string BaseKnight::toString() const {
     return s;
 }
 
-
 /* * * END implementation of class BaseKnight * * */
 
 /* * * BEGIN implementation of class ArmyKnights * * */
@@ -766,19 +786,18 @@ ArmyKnights::ArmyKnights(const string & file_armyknights) {
 }
 void ArmyKnights::fight(BaseOpponent * opponent, int type, int * itemList) {
     while (1) {
-        if(last->fight(opponent, type, itemList)) {
-            cout << "win";
+        if(last->fight(opponent, type, itemList) == 1) {
+            last->revive();
+            if (type == 10) isMeetOmega = 1;
+            if (type == 11) isMeetHades = 1;
             return;
         }
         else {
-            cout << "lose";
+            if (last->revive()) return;
             this->numsOfKnights--;
-            if (numsOfKnights > 0) {
-                last = KnightList[numsOfKnights - 1];
-            }
-            else {
-                return;
-            }
+            delete last;
+            if (numsOfKnights > 0) last = KnightList[numsOfKnights - 1];
+            else return;
         }
     }
 }
@@ -806,44 +825,55 @@ void ArmyKnights::getSpecialItem(int event) {
     }
 }
 bool ArmyKnights::adventure(Events * events) {
-    itemInherit = new int[6];
+    itemList = new int[6];
     for (int i = 0; i < 6; ++i) {
-        itemInherit[i] = 0;
+        itemList[i] = 0;
     }
     for (int i = 0; i < events->count(); ++i) {
         int event = events->get(i);
         debug(event);
         BaseOpponent * opponent = nullptr;
         switch (event) {
-        case 1 ... 9: {
+        case 1 ... 8: {
             BaseOpponent * tempOpponent;
             opponent = tempOpponent->create(i, event);
-            fight(opponent, event, itemInherit);
-            if (numsOfKnights > 0) {
-                last->revive();
-            }
+            fight(opponent, event, itemList);
+            break;
+        }
+        case 9: {
+            last->usePhoenix(last->getHP_maxHP().second);
             break;
         }
         case 10: {
             if (isMeetOmega) break;
-
+            BaseOpponent * tempOpponent;
+            opponent = tempOpponent->create(i, event);
+            fight(opponent, 10, itemList);
+            break;
+        }
+        case 11: {
+            if (isMeetHades) break;
+            BaseOpponent * tempOpponent;
+            opponent = tempOpponent->create(i, event);
+            fight(opponent, 11, itemList);
+            break;
         }
         case 112 ... 114: {
             switch (event)
             {
             case 112: 
-                itemInherit[2]++;
+                itemList[2]++;
                 break;
             case 113: 
-                itemInherit[3]++;
+                itemList[3]++;
                 break;
             case 114:
-                itemInherit[4]++;
+                itemList[4]++;
                 break;
             default:
                 break;
             }
-            last->updateInfo(itemInherit);
+            last->updateInfo(itemList);
         }
         case 95 ... 98: {
             getSpecialItem(event);
@@ -854,14 +884,13 @@ bool ArmyKnights::adventure(Events * events) {
         }
         printInfo();
         if (numsOfKnights <= 0) {
-            delete last;
-            delete []itemInherit;
+            delete []itemList;
             delete opponent;
             return 0;
         }
         delete opponent;
     }
-    delete []itemInherit;
+    delete []itemList;
     if (numsOfKnights > 0) return 1;
     return 0;
 }

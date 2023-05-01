@@ -46,7 +46,7 @@ public:
         return {hp, maxhp};
     }
     void usePhoenix(int hp) {
-        this->hp = hp;
+        this->hp = min(max(hp + this->hp, hp), maxhp);
     }
 };
 
@@ -224,7 +224,6 @@ private:
 public:
     NormalBag(int p1, int anti);
     ~NormalBag() {
-        listOfItems.~List();
     }
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
@@ -233,7 +232,6 @@ public:
 
 class BaseOpponent {
 protected: 
-    int levelO;
     int i;
     OpponentType id;
     int BaseDamage = 0;
@@ -243,6 +241,7 @@ protected:
     int baseDmg[6] = {0, 10, 15, 45, 75, 95};
 public:
     int klevel;
+    int levelO;
     BaseOpponent * create(int i, int id);
     ~BaseOpponent() {}
     bool result();
@@ -344,7 +343,7 @@ private:
     BaseKnight ** KnightList;
     BaseKnight * last;
     int numsOfKnights;
-    int *itemInherit; // ANTIDOTE, PHOENIX1, PHOENIX2, PHOENIX3, PHOENIX4, GIL
+    int *itemList; // ANTIDOTE, PHOENIX1, PHOENIX2, PHOENIX3, PHOENIX4, GIL
     bool PaladinShield = 0;
     bool LancelotSpear = 0;
     bool GuinevereHair = 0;
