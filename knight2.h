@@ -53,7 +53,7 @@ public:
 class Paladin: public BaseKnight {
 public: 
     Paladin() {
-        knightType = PALADIN;
+        this->knightType = PALADIN;
         this->Dmg = PaladinDmg;
     }
     ~Paladin();
@@ -62,7 +62,7 @@ public:
 class Lancelot: public BaseKnight {
 public:
     Lancelot() {
-        knightType = LANCELOT;
+        this->knightType = LANCELOT;
         this->Dmg = LancelotDmg;
     }
     ~Lancelot();
@@ -71,7 +71,7 @@ public:
 class Dragon: public BaseKnight {
 public:
     Dragon() {
-        knightType = DRAGON;
+        this->knightType = DRAGON;
         this->Dmg = DragonDmg;
     }
     ~Dragon();
@@ -80,7 +80,7 @@ public:
 class Normal: public BaseKnight {
 public:
     Normal() {
-        knightType = NORMAL;
+        this->knightType = NORMAL;
         this->Dmg = 0;
     }
     ~Normal();
@@ -148,9 +148,9 @@ public:
     Node() {
         this->next = nullptr;
     }
-    Node(BaseItem * item, Node * ptrnext = nullptr) {
+    Node(BaseItem * item, Node * ptrNext = nullptr) {
         this->item = item;
-        this->next = ptrnext;
+        this->next = ptrNext;
     }
     ~Node() {
         next = nullptr;
@@ -175,8 +175,7 @@ public:
 class BaseBag {
 public:
     BaseBag() {}
-    virtual ~BaseBag() {
-    }
+    virtual ~BaseBag() {}
     int maxSize;
     List listOfItems;
     void drop(int num, int pos);
@@ -190,8 +189,7 @@ private:
     const int Size = 5000;
 public:
     PaladinBag(int p1, int anti);
-    ~PaladinBag() {
-    }
+    ~PaladinBag() {}
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -201,8 +199,7 @@ private:
     const int Size = 16;
 public:
     LancelotBag(int p1, int anti);
-    ~LancelotBag() {
-    }
+    ~LancelotBag() {}
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -212,8 +209,7 @@ private:
     const int Size = 14;
 public:
     DragonBag(int p1);
-    ~DragonBag() {
-    }
+    ~DragonBag() {}
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -223,8 +219,7 @@ private:
     const int Size = 19;
 public:
     NormalBag(int p1, int anti);
-    ~NormalBag() {
-    }
+    ~NormalBag() {}
     bool insertFirst(BaseItem * item);
     BaseItem * get(ItemType itemType);
     string toString() const;
@@ -232,6 +227,7 @@ public:
 
 class BaseOpponent {
 protected: 
+    int hp = 0;
     int i;
     OpponentType id;
     int BaseDamage = 0;
@@ -248,6 +244,12 @@ public:
     void dmg();
     OpponentType type();
     void init(int i, int id);
+    int gethp() {
+        return hp;
+    }
+    void hpRemain(int dmg) {
+        this->hp -= dmg;
+    }
     virtual int reward() {
         return gilGain;
     }
@@ -262,42 +264,42 @@ public:
     MadBear(int i, int id)  {
         init(i, id);
     }
-    ~MadBear();
+    ~MadBear(){};
 };
 class Bandit: public BaseOpponent {
 public: 
     Bandit(int i, int id) {
         init(i, id);
     }
-    ~Bandit();
+    ~Bandit(){};
 };
 class LordLupin: public BaseOpponent {
 public: 
     LordLupin(int i, int id) {
         init(i, id);
     }
-    ~LordLupin();
+    ~LordLupin(){};
 };
 class Elf: public BaseOpponent {
 public: 
     Elf(int i, int id) {
         init(i, id);
     }
-    ~Elf();
+    ~Elf(){};
 };
 class Troll: public BaseOpponent {
 public:
     Troll(int i, int id) {
         init(i, id);
     }
-    ~Troll();
+    ~Troll(){};
 };
 class Tornbery: public BaseOpponent {
 public: 
     Tornbery(int i, int id) {
         init(i, id);
     }
-    ~Tornbery();
+    ~Tornbery(){};
     int lose() {
         return 10;
     }
@@ -307,43 +309,52 @@ public:
     Queen(int i, int id) {
         init(i, id);
     }
-    ~Queen();
+    ~Queen(){};
 };
 class Nina: public BaseOpponent {
 public: 
     Nina(int i, int id) {
         init(i, id);
     }
-    ~Nina();
+    ~Nina(){};
 };
 class Durian: public BaseOpponent {
 public: 
     Durian(int i, int id) {
         init(i, id);
     }
-    ~Durian();
+    ~Durian(){};
 };
 class Omega: public BaseOpponent {
 public: 
     Omega(int i, int id) {
         init(i, id);
     }
-    ~Omega();
+    ~Omega(){};
 };
 class Hades: public BaseOpponent {
 public: 
     Hades(int i, int id) {
         init(i, id);
     }
-    ~Hades();
+    ~Hades(){};
 };
-
+class Ultimecia: public BaseOpponent {
+public:
+    Ultimecia(int i, int id) {
+        init(i, id);
+        this->hp = 5000;
+    } 
+    ~Ultimecia(){};
+};
 class ArmyKnights {
 private:
     BaseKnight ** KnightList;
+    BaseKnight ** tempList;
     BaseKnight * last;
     int numsOfKnights;
     int *itemList; // ANTIDOTE, PHOENIX1, PHOENIX2, PHOENIX3, PHOENIX4, GIL
+    bool calledTemp = 0;
     bool PaladinShield = 0;
     bool LancelotSpear = 0;
     bool GuinevereHair = 0;
@@ -356,8 +367,10 @@ public:
         for (int i = 0; i < numsOfKnights; ++i) {
             delete KnightList[i];
         }
-        delete []KnightList;
-
+        if (!calledTemp) {
+            delete []KnightList;
+        } 
+        // else delete []tempList;
     }
     void fight(BaseOpponent * opponent, int type, int * itemList);
     
