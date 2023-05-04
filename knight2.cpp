@@ -256,17 +256,18 @@ void BaseBag::drop(int num, int pos = 0) {
         listOfItems.remove(pos);
     }
 }
+
 PaladinBag::PaladinBag(int p1, int anti) {
     this->maxSize = Size;
     listOfItems.maxSize = this->maxSize;
-    while (anti--) {
-        BaseItem * item = new Antidote;
+    while (p1--) {
+        BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
         }
     }
-    while (p1--) {
-        BaseItem * item = new PhoenixI;
+    while (anti--) {
+        BaseItem * item = new Antidote;
         if (!insertFirst(item)) {
             delete item;
         }
@@ -312,14 +313,14 @@ string PaladinBag::toString() const {
 LancelotBag::LancelotBag(int p1, int anti) {
     this->maxSize = Size;
     listOfItems.maxSize = this->maxSize;
-    while (anti--) {
-        BaseItem * item = new Antidote;
+    while (p1--) {
+        BaseItem * item = new PhoenixI;
         if (!insertFirst(item)) {
             delete item;
         }
     }
-    while (p1--) {
-        BaseItem * item = new PhoenixI;
+    while (anti--) {
+        BaseItem * item = new Antidote;
         if (!insertFirst(item)) {
             delete item;
         }
@@ -413,19 +414,17 @@ string DragonBag::toString() const {
 NormalBag::NormalBag(int p1, int anti) {
     this->maxSize = Size;
     this->listOfItems.maxSize = this->maxSize;
-
-    while (anti--) {
-        BaseItem * item = new Antidote();
-        if (!insertFirst(item)) {
-            delete item;
-        }
-    }
     while (p1--) {
         BaseItem * item = new PhoenixI();
         if (!insertFirst(item)) {
             delete item;
         }
-        // delete item;
+    }
+    while (anti--) {
+        BaseItem * item = new Antidote();
+        if (!insertFirst(item)) {
+            delete item;
+        }
     }
 }
 bool NormalBag::insertFirst(BaseItem * item) {
@@ -893,7 +892,7 @@ bool Normal::fight(BaseOpponent * opponent, int type, int * itemList) {
             if (opponent->result()) {
                 if (gil * 2 > 999) {
                     itemList[5] += (gil * 2 - 999);
-                    this->gil = gil * 2 - 999;
+                    this->gil = 999;
                 }
                 else this->gil *= 2;
             }
